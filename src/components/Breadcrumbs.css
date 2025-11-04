@@ -1,0 +1,38 @@
+.breadcrumbs-container {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 1rem 0;
+}
+
+.medical-breadcrumb {
+  margin-bottom: 0;
+  background: none !important;
+  padding: 0;
+}
+
+.medical-breadcrumb .breadcrumb-item {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+}
+
+.medical-breadcrumb .breadcrumb-item a {
+  color: #00a9bf;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.medical-breadcrumb .breadcrumb-item a:hover {
+  color: #008999;
+  text-decoration: underline;
+}
+
+.medical-breadcrumb .breadcrumb-item.active {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.medical-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+  content: ">";
+  color: #6c757d;
+}
