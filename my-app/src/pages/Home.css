@@ -1,0 +1,217 @@
+.home-page {
+  min-height: 100vh;
+  background: #F5F5F5;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+/* Герой секция с фоном #00a9bf */
+.home-hero {
+  background: linear-gradient(135deg, #00a9bf, #008999);
+  padding: 80px 0;
+  text-align: center;
+  color: #FFFFFF;
+  width: 100%;
+}
+
+.hero-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.hero-title {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 48px;
+  font-weight: 900;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.hero-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  margin-bottom: 40px;
+  opacity: 0.95;
+  line-height: 1.6;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Features секция в стиле пациентов */
+.features-section {
+  padding: 80px 0;
+  background: #FFFFFF;
+  width: 100%;
+}
+
+.features-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.section-title {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: #333333;
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 25px;
+  width: 100%;
+}
+
+.feature-card {
+  background: #FFFFFF;
+  border-radius: 15px;
+  padding: 30px 25px;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+  transition: box-shadow 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.feature-card:hover {
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.feature-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.feature-card-title {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #333333;
+  margin-bottom: 15px;
+}
+
+.feature-card-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  color: #666666;
+  line-height: 1.6;
+  flex-grow: 1;
+}
+
+/* Кнопки в стиле пациентов */
+.medical-btn-primary {
+  background: #FFFFFF !important;
+  border: none !important;
+  border-radius: 25px !important;
+  padding: 12px 30px !important;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #00a9bf !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3) !important;
+}
+
+.medical-btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4) !important;
+  background: #f8f9fa !important;
+}
+
+.medical-btn-outline {
+  background: transparent !important;
+  border: 2px solid #FFFFFF !important;
+  border-radius: 25px !important;
+  padding: 12px 30px !important;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #FFFFFF !important;
+  transition: all 0.3s ease !important;
+}
+
+.medical-btn-outline:hover {
+  background: #FFFFFF !important;
+  color: #00a9bf !important;
+  transform: translateY(-2px);
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+  .features-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-hero {
+    padding: 60px 0;
+  }
+  
+  .hero-title {
+    font-size: 36px;
+  }
+  
+  .hero-subtitle {
+    font-size: 18px;
+    padding: 0 10px;
+  }
+  
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+    padding: 0 10px;
+  }
+  
+  .features-section {
+    padding: 60px 0;
+  }
+  
+  .section-title {
+    font-size: 28px;
+    margin-bottom: 40px;
+    padding: 0 10px;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 0 10px;
+  }
+  
+  .feature-card {
+    padding: 25px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-content,
+  .features-container {
+    padding: 0 15px;
+  }
+  
+  .feature-card {
+    margin: 0;
+  }
+}
