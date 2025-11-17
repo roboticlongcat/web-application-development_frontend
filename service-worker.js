@@ -1,36 +1,77 @@
-const CACHE_NAME = 'app-cache-v1';
+const CACHE_NAME = 'insulin-app-v1';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json',
-  '/default-patient.png' // ЯВНО добавляем картинку в кэш
+  './',
+  './index.html',
+  './static/js/bundle.js',
+  './static/css/main.css',
+  './manifest.json',
+  './default-patient.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
-self.addEventListener('install', function(event) {
-  self.skipWaiting(); // Добавляем эту строку
+self.addEventListener('install', (event) => {
+  console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(function(cache) {
+      .then((cache) => {
+        console.log('Service Worker: Caching files');
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('fetch', function(event) {
-  // Пропускаем неподдерживаемые схемы
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activated');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('Service Worker: Clearing old cache');
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  // Не обрабатываем не-HTTP запросы
   if (!event.request.url.startsWith('http')) {
     return;
   }
-  
+
   event.respondWith(
     caches.match(event.request)
-      .then(function(response) {
+      .then((response) => {
+        // Возвращаем кэш если есть, иначе делаем запрос
         if (response) {
           return response;
         }
-        return fetch(event.request);
-      }
-    )
+        
+        return fetch(event.request).then((fetchResponse) => {
+          // Кэшируем только успешные ответы
+          if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
+            return fetchResponse;
+          }
+
+          const responseToCache = fetchResponse.clone();
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+
+          return fetchResponse;
+        }).catch(() => {
+          // Fallback для картинок
+          if (event.request.destination === 'image') {
+            return caches.match('./default-patient.png');
+          }
+        });
+      })
   );
 });
