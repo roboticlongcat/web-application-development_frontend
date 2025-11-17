@@ -3,7 +3,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     // Проверяем, что мы в продакшене
     if (window.location.protocol === 'https:') {
-      navigator.serviceWorker.register('./service-worker.js')
+      navigator.serviceWorker.register('./serviceWorker.js')
         .then(function(registration) {
           console.log('SW registered successfully: ', registration);
           
