@@ -1,9 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import mkcert from 'vite-plugin-mkcert'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), mkcert()],
+  base: "/web-application-development_frontend",
   server: {
+    host: 'localhost',
     port: 3000,
     proxy: {
       '/api': {
@@ -12,5 +15,9 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets'
   }
 })

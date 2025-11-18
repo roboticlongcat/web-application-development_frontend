@@ -1,8 +1,7 @@
 .patient-page {
   min-height: 100vh;
   background: #F5F5F5;
-  padding: 0;
-  margin: 0;
+  padding: 20px 0;
 }
 
 .cardio-header {
@@ -50,23 +49,31 @@
   margin-top: 20px;
   margin-bottom: 30px;
   text-align: center;
+  padding: 0 15px;
 }
 
-.patient-content-container {
+/* Основной белый блок */
+.patient-main-card {
   background: #FFFFFF;
   border-radius: 20px;
   padding: 40px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  display: flex;
-  gap: 40px;
-  align-items: flex-start;
-  max-width: 900px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
-.patient-photo-name-container {
-  flex: 0 0 auto;
+.patient-content-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  gap: 30px;
+  width: 100%;
+}
+
+.patient-photo-name-container {
+  text-align: center;
+  width: 100%;
 }
 
 .patient-photo {
@@ -91,7 +98,8 @@
 }
 
 .patient-info-card {
-  flex: 1;
+  width: 100%;
+  text-align: center;
 }
 
 .patient-info {
@@ -103,26 +111,95 @@
   padding: 25px;
   border-radius: 15px;
   border-left: 5px solid #00a9bf;
+  text-align: left;
+  display: inline-block;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.patient-info strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.patient-info br {
+  margin-bottom: 8px;
+  display: block;
+  content: "";
+}
+
+.patient-photo-img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 5px solid #00a9bf;
+  margin: 0 auto 20px auto;
+  background-color: #f0f0f0;
+  display: block;
+}
+
+/* Стили для хлебных крошек */
+.breadcrumb-container {
+  max-width: 800px;
+  margin: 0 auto 20px auto;
+  padding: 0 20px;
+}
+
+.breadcrumb {
+  background: none;
+  padding: 0;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #666;
+}
+
+.breadcrumb a {
+  color: #00a9bf;
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: #008999;
+  text-decoration: underline;
+}
+
+.breadcrumb .active {
+  color: #333;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {
+  .patient-page {
+    padding: 15px 0;
+  }
+  
   .main-patient-content {
     padding: 20px 15px;
   }
   
   .patient-info-title {
-    margin-top: 20px;
+    margin-top: 15px;
     font-size: 24px;
+    padding: 0 10px;
+  }
+  
+  .patient-main-card {
+    padding: 25px;
+    margin: 0 10px;
   }
   
   .patient-content-container {
-    flex-direction: column;
-    padding: 25px;
     gap: 25px;
-    text-align: center;
   }
   
   .patient-photo {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .patient-photo-img {
     width: 120px;
     height: 120px;
   }
@@ -134,5 +211,51 @@
   .patient-info {
     font-size: 16px;
     padding: 20px;
+    text-align: left;
+  }
+  
+  .breadcrumb-container {
+    padding: 0 15px;
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .patient-page {
+    padding: 10px 0;
+  }
+  
+  .main-patient-content {
+    padding: 15px 10px;
+  }
+  
+  .patient-main-card {
+    margin: 0 5px;
+    padding: 20px;
+  }
+  
+  .patient-info-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  
+  .patient-info {
+    padding: 15px;
+    font-size: 15px;
+  }
+  
+  .breadcrumb-container {
+    padding: 0 10px;
+  }
+}
+
+/* Для очень больших экранов */
+@media (min-width: 1200px) {
+  .patient-main-card {
+    max-width: 900px;
+  }
+  
+  .breadcrumb-container {
+    max-width: 900px;
   }
 }

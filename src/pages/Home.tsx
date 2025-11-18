@@ -1,7 +1,5 @@
 import { type FC } from "react";
-import { Link } from "react-router-dom";
-import { Container, Row, Col, Button } from "react-bootstrap";
-import { ROUTES } from "../Routes";
+import { Container, Row, Col } from "react-bootstrap";
 import './Home.css';
 
 export const HomePage: FC = () => {
@@ -17,13 +15,6 @@ export const HomePage: FC = () => {
                   Профессиональная система управления пациентами с диабетом 
                   и расчета дозы болюсного инсулина на основе индивидуальных коэффициентов чувствительности
                 </p>
-                <div className="hero-actions">
-                  <Link to={ROUTES.Patients}>
-                    <Button variant="primary" className="medical-btn-primary">
-                      Просмотреть пациентов
-                    </Button>
-                  </Link>
-                </div>
               </div>
             </Col>
           </Row>

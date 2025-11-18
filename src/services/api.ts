@@ -53,14 +53,11 @@ const mockPatients: Patient[] = [
   }
 ];
 
-// Базовый URL для API - через прокси Vite
 const API_BASE = '/api';
 
-// Функция для трансформации данных из бэкенда
 function transformPatientData(backendData: any): Patient {
   console.log('Transforming patient data:', backendData);
   
-  // Если бэкенд использует camelCase или другие названия полей
   return {
     Patient_ID: backendData.Patient_ID || backendData.patient_id || backendData.id || 0,
     Name: backendData.Name || backendData.name || 'Неизвестно',
@@ -73,8 +70,19 @@ function transformPatientData(backendData: any): Patient {
   };
 }
 
+// api.ts
+const isProduction = process.env.NODE_ENV === 'production';
+const isGitHubPages = window.location.hostname.includes('github.io');
+
 export const patientApi = {
-  async getPatients(): Promise<Patient[]> {
+  async getPatients(): Promise<{ patients: Patient[]; fromMock: boolean }> {
+    // На GitHub Pages всегда используем мок-данные
+    if (isProduction || isGitHubPages) {
+      console.log('Using mock data on production/GitHub Pages');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return { patients: mockPatients, fromMock: true };
+    }
+
     try {
       console.log('Fetching patients from backend...');
       const response = await fetch(`${API_BASE}/patients`);
@@ -86,28 +94,35 @@ export const patientApi = {
       const data = await response.json();
       console.log('Raw patients data from backend:', data);
       
-      // Трансформируем данные если нужно
       const patients = Array.isArray(data) 
         ? data.map(transformPatientData)
         : data;
       
       console.log('Transformed patients:', patients);
-      return patients;
+      return { patients, fromMock: false };
     } catch (error) {
       console.warn('Failed to fetch patients from backend, using mock data:', error);
       await new Promise(resolve => setTimeout(resolve, 500));
-      return mockPatients;
+      return { patients: mockPatients, fromMock: true };
     }
   },
 
-  async getPatientById(id: number): Promise<Patient | null> {
+  async getPatientById(id: number): Promise<{ patient: Patient | null; fromMock: boolean }> {
+    // На GitHub Pages всегда используем мок-данные
+    if (isProduction || isGitHubPages) {
+      console.log('Using mock data on production/GitHub Pages for patient:', id);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const patient = mockPatients.find(p => p.Patient_ID === id) || null;
+      return { patient, fromMock: true };
+    }
+
     try {
       console.log(`Fetching patient ${id} from backend...`);
       const response = await fetch(`${API_BASE}/patients/${id}`);
       
       if (!response.ok) {
         if (response.status === 404) {
-          return null;
+          return { patient: null, fromMock: false };
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -117,11 +132,12 @@ export const patientApi = {
       
       const patient = transformPatientData(data);
       console.log('Transformed patient:', patient);
-      return patient;
+      return { patient, fromMock: false };
     } catch (error) {
       console.warn(`Failed to fetch patient ${id} from backend, using mock data:`, error);
       await new Promise(resolve => setTimeout(resolve, 300));
-      return mockPatients.find(patient => patient.Patient_ID === id) || null;
+      const patient = mockPatients.find(p => p.Patient_ID === id) || null;
+      return { patient, fromMock: true };
     }
   }
 };

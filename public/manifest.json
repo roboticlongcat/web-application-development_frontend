@@ -1,0 +1,20 @@
+{
+  "short_name": "Инсулин Кальк",
+  "name": "Калькулятор болюсного инсулина",
+  "description": "Профессиональная система управления пациентами с диабетом и расчета дозы болюсного инсулина",
+  "icons": [
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/web-application-development_frontend/",
+  "display": "standalone",
+  "theme_color": "#00a9bf",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/web-application-development_frontend/",
+  "categories": ["health", "medical"],
+  "lang": "ru-RU"
+}
