@@ -18,9 +18,9 @@ var (
 func GetCurrentUser() *CurrentUser {
 	once.Do(func() {
 		instance = &CurrentUser{
-			ID:          1, // Фиксированный ID создателя
-			Username:    "creator",
-			IsModerator: false,
+			ID:          2, // Фиксированный ID создателя
+			Username:    "user",
+			IsModerator: true,
 		}
 	})
 	return instance

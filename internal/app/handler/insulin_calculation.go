@@ -180,6 +180,14 @@ func (h *Handler) FormInsulinCalculation(ctx *gin.Context) {
 
 // PUT /api/insulin-calculations/:id/complete - завершение/отклонение модератором
 func (h *Handler) CompleteInsulinCalculation(ctx *gin.Context) {
+	// Псевдо-авторизация
+	authToken := ctx.GetHeader("Authorization")
+	if authToken != "Bearer insulin123" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorized",
+		})
+		return
+	}
 	idStr := ctx.Param("insulin_calculation_id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -233,5 +241,48 @@ func (h *Handler) DeleteInsulinCalculation(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Расчет успешно удален",
+	})
+}
+
+// POST /api/insulin-calculations/dosage-results - прием результатов от асинхронного сервиса
+func (h *Handler) ReceiveCalculationResults(ctx *gin.Context) {
+
+	var request struct {
+		InsulinCalculationID uint `json:"insulin_calculation_id" binding:"required"`
+		Results              []struct {
+			InsulinCalculationPatientID uint    `json:"insulin_calculation_patient_id" binding:"required"`
+			PatientID                   uint    `json:"patient_id" binding:"required"`
+			CalculatedInsulin           float32 `json:"calculated_insulin" binding:"required"`
+			Status                      string  `json:"status" binding:"required"`
+		} `json:"results" binding:"required"`
+	}
+
+	if err := ctx.BindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request format",
+		})
+		return
+	}
+
+	// Обновляем calculated_insulin для каждой записи м-м
+	for _, result := range request.Results {
+		err := h.Repository.UpdateCalculatedInsulin(
+			result.InsulinCalculationPatientID,
+			result.PatientID,
+			result.CalculatedInsulin,
+		)
+		if err != nil {
+			logrus.Errorf("Error updating insulin for patient %d: %v", result.PatientID, err)
+		}
+	}
+
+	// СТАВИМ calculated_at после получения всех результатов
+	err := h.Repository.SetCalculationTime(request.InsulinCalculationID)
+	if err != nil {
+		logrus.Errorf("Error setting calculation time: %v", err)
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Results updated successfully",
 	})
 }

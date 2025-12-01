@@ -1,9 +1,12 @@
 package repository
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -151,10 +154,8 @@ func (r *Repository) FormInsulinCalculation(id uint) error {
 		return errors.New("нельзя сформировать расчет без пациентов")
 	}
 
-	now := time.Now()
 	return r.db.Model(&ds.InsulinCalculation{}).Where("insulin_calculation_id = ?", id).Updates(map[string]interface{}{
-		"status":        "сформирован",
-		"calculated_at": &now,
+		"status": "сформирован",
 	}).Error
 }
 
@@ -177,8 +178,12 @@ func (r *Repository) CompleteInsulinCalculation(id uint, status string) error {
 		return errors.New("только модератор может завершать расчет")
 	}
 
-	if err := r.recalculateAllInsulinInCalculation(id); err != nil {
-		return err
+	// ВЫЗОВ АСИНХРОННОГО СЕРВИСА вместо локального расчета
+	if status == "завершён" {
+		err := r.CallAsyncInsulinService(id)
+		if err != nil {
+			return fmt.Errorf("ошибка при вызове асинхронного сервиса: %w", err)
+		}
 	}
 
 	now := time.Now()
@@ -189,6 +194,14 @@ func (r *Repository) CompleteInsulinCalculation(id uint, status string) error {
 	}
 
 	return r.db.Model(&ds.InsulinCalculation{}).Where("insulin_calculation_id = ?", id).Updates(updates).Error
+}
+
+// Установка времени расчета после получения результатов
+func (r *Repository) SetCalculationTime(calculationID uint) error {
+	now := time.Now()
+	return r.db.Model(&ds.InsulinCalculation{}).
+		Where("insulin_calculation_id = ?", calculationID).
+		Update("calculated_at", &now).Error
 }
 
 // DELETE удаление (дата формирования)
@@ -329,11 +342,6 @@ func (r *Repository) CalculateInsulin(currentGlucose, breadUnits float32, patien
 	// Общая доза инсулина с ограничениями
 	totalInsulin := correctionInsulin + foodInsulin
 
-	// Ограничиваем максимальное значение (например, 50 единиц)
-	//if totalInsulin > 50.0 {
-	//	totalInsulin = 900.0
-	//}
-
 	// Ограничиваем минимальное значение
 	if totalInsulin < 0 {
 		totalInsulin = 0
@@ -343,4 +351,75 @@ func (r *Repository) CalculateInsulin(currentGlucose, breadUnits float32, patien
 	totalInsulin = float32(math.Round(float64(totalInsulin)*100) / 100)
 
 	return totalInsulin
+}
+
+// Обновление рассчитанного инсулина по ID м-м записи
+func (r *Repository) UpdateCalculatedInsulin(insulinCalculationPatientID, patientID uint, calculatedInsulin float32) error {
+	return r.db.Model(&ds.InsulinCalculationPatients{}).
+		Where("insulin_calculation_patient_id = ? AND patient_id = ?", insulinCalculationPatientID, patientID).
+		Update("calculated_insulin", calculatedInsulin).Error
+}
+
+// Получение всех записей м-м для расчета
+func (r *Repository) GetInsulinCalculationPatients(insulinCalculationID uint) ([]ds.InsulinCalculationPatients, error) {
+	var patients []ds.InsulinCalculationPatients
+	err := r.db.Preload("Patient").
+		Where("insulin_calculation_id = ?", insulinCalculationID).
+		Find(&patients).Error
+	return patients, err
+}
+
+// Вызов асинхронного сервиса для расчета инсулина
+func (r *Repository) CallAsyncInsulinService(insulinCalculationID uint) error {
+	// Получаем все записи м-м для этого расчета
+	patients, err := r.GetInsulinCalculationPatients(insulinCalculationID)
+	if err != nil {
+		return err
+	}
+
+	// Подготавливаем данные для отправки
+	var calculationData []map[string]interface{}
+	for _, patient := range patients {
+		data := map[string]interface{}{
+			"insulin_calculation_patient_id": patient.Insulin_Calculation_Patient_ID,
+			"patient_id":                     patient.Patient_ID,
+			"current_glucose":                patient.CurrentGlucose,
+			"target_glucose":                 patient.Patient.Glucose,
+			"sensitivity_coeff":              patient.Patient.Sensitivity,
+			"bread_units":                    patient.BreadUnits,
+		}
+		calculationData = append(calculationData, data)
+	}
+
+	// Отправляем все данные одним запросом
+	requestData := map[string]interface{}{
+		"insulin_calculation_id": insulinCalculationID,
+		"patients":               calculationData,
+	}
+
+	go r.sendToAsyncService(requestData)
+
+	return nil
+}
+
+func (r *Repository) sendToAsyncService(requestData map[string]interface{}) {
+	jsonData, err := json.Marshal(requestData)
+	if err != nil {
+		logrus.Errorf("Error marshaling request: %v", err)
+		return
+	}
+
+	// Вызов асинхронного Django сервиса
+	resp, err := http.Post(
+		"http://localhost:8000/api/calculate-insulin/",
+		"application/json",
+		bytes.NewBuffer(jsonData),
+	)
+	if err != nil {
+		logrus.Errorf("Error calling async service: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	logrus.Infof("Async calculation sent for calculation %d", requestData["insulin_calculation_id"])
 }

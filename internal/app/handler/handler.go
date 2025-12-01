@@ -37,6 +37,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		api.PUT("/insulin-calculations/:insulin_calculation_id/form", h.FormInsulinCalculation)
 		api.PUT("/insulin-calculations/:insulin_calculation_id/complete", h.CompleteInsulinCalculation)
 		api.DELETE("/insulin-calculations/:insulin_calculation_id", h.DeleteInsulinCalculation)
+		api.POST("insulin-calculations/result-dosages", h.ReceiveCalculationResults)
 
 		// Расчеты-пациенты (м-м)
 		api.DELETE("/insulin-calculations/:insulin_calculation_id/patients/:patient_id", h.RemovePatientFromInsulinCalculation)
