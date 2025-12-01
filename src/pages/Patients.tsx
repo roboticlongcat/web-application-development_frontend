@@ -6,6 +6,7 @@ import { fetchPatients } from '../slices/patientsSlice';
 import { setSearchTerm } from '../slices/filtersSlice';
 import { type Patient } from '../types/patient';
 import './Patients.css';
+import { IMAGE_BASE_URL } from '../config';
 
 export const PatientsPage: FC = () => {
   const dispatch = useAppDispatch();
@@ -32,6 +33,13 @@ export const PatientsPage: FC = () => {
     }
   };
 
+  const handleBasketAction = (): number => {
+    const count_patients = 0;
+    const result = count_patients >= 0 ? 0 : -1;
+    console.log(`Метод корзины вызван, результат: ${result}`);
+    return result;
+  };
+
   // Функция для получения картинки пациента
   const getPatientImage = (patient: Patient) => {
     if (fromMock) {
@@ -39,7 +47,7 @@ export const PatientsPage: FC = () => {
       return './default-patient.png';
     } else {
       // Если данные из БД - пытаемся загрузить из Minio
-      return `http://localhost:9000/test/${patient.Patient_ID}.jpg`;
+      return `${IMAGE_BASE_URL}/${patient.Patient_ID}.jpg`;
     }
   };
 
@@ -180,6 +188,16 @@ export const PatientsPage: FC = () => {
           </Col>
         </Row>
       </Container>
+    {/* Иконка калькулятора */}
+      <div className="calculation-icon">
+          <svg width="44" height="47" viewBox="0 0 44 47" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 12H40V41H4V12Z" fill="#00a9bf"/>
+            <path d="M4 12H40V17H4V12Z" fill="#00a9bf"/>
+            <path d="M12 6H32V12H12V6Z" fill="#00a9bf"/>
+          </svg>
+          {/* Количество пациентов = 0, т.к. заявки нет */}
+          <span className="calculation-count">{handleBasketAction()}</span>
+      </div>
     </div>
   );
 };

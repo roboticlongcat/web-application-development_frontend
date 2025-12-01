@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../config';
 import { type Patient } from '../types/patient';
 
 const mockPatients: Patient[] = [
@@ -53,7 +54,6 @@ const mockPatients: Patient[] = [
   }
 ];
 
-const API_BASE = '/api';
 
 function transformPatientData(backendData: any): Patient {
   console.log('Transforming patient data:', backendData);
@@ -70,22 +70,12 @@ function transformPatientData(backendData: any): Patient {
   };
 }
 
-// api.ts
-const isProduction = process.env.NODE_ENV === 'production';
-const isGitHubPages = window.location.hostname.includes('github.io');
-
 export const patientApi = {
   async getPatients(): Promise<{ patients: Patient[]; fromMock: boolean }> {
-    // На GitHub Pages всегда используем мок-данные
-    if (isProduction || isGitHubPages) {
-      console.log('Using mock data on production/GitHub Pages');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { patients: mockPatients, fromMock: true };
-    }
 
     try {
       console.log('Fetching patients from backend...');
-      const response = await fetch(`${API_BASE}/patients`);
+      const response = await fetch(`${API_BASE_URL}/patients`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -108,17 +98,9 @@ export const patientApi = {
   },
 
   async getPatientById(id: number): Promise<{ patient: Patient | null; fromMock: boolean }> {
-    // На GitHub Pages всегда используем мок-данные
-    if (isProduction || isGitHubPages) {
-      console.log('Using mock data on production/GitHub Pages for patient:', id);
-      await new Promise(resolve => setTimeout(resolve, 300));
-      const patient = mockPatients.find(p => p.Patient_ID === id) || null;
-      return { patient, fromMock: true };
-    }
-
     try {
       console.log(`Fetching patient ${id} from backend...`);
-      const response = await fetch(`${API_BASE}/patients/${id}`);
+      const response = await fetch(`${API_BASE_URL}/patients/${id}`);
       
       if (!response.ok) {
         if (response.status === 404) {

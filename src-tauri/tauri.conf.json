@@ -2,10 +2,9 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "insulin_calc",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.insulin.calc-app",
   "build": {
-    "frontendDist": "../build",
-    "devUrl": "https://localhost:3000",
+    "frontendDist": "../dist",
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build"
   },
@@ -15,13 +14,12 @@
         "fullscreen": false,
         "resizable": true,
         "title": "Инсулин Калькулятор",
-        "url": "https://localhost:3000"
+        "url": "https://localhost:3000/web-application-development_frontend/"
       }
     ],
     "security": {
       "csp": null
-    },
-    "withGlobalTauri": true
+    }
   },
   "bundle": {
     "active": true,
@@ -33,10 +31,5 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
-  },
-  "plugins": {
-    "http": {
-      "enabled": true
-    }
   }
 }

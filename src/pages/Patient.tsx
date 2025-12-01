@@ -4,6 +4,7 @@ import { Container, Row, Col, Button } from 'react-bootstrap';
 import { type Patient } from '../types/patient';
 import { patientApi } from '../services/api';
 import './Patient.css';
+import { IMAGE_BASE_URL } from '../config';
 
 export const PatientPage: FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -66,7 +67,7 @@ export const PatientPage: FC = () => {
     }
     
     // Иначе пытаемся загрузить из Minio
-    return `http://localhost:9000/test/${patient.Patient_ID}.jpg`;
+    return `${IMAGE_BASE_URL}/${patient.Patient_ID}.jpg`;
   };
 
   const handleImageError = (_e: React.SyntheticEvent<HTMLImageElement>) => {

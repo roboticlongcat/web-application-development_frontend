@@ -6,18 +6,13 @@ export default defineConfig({
   plugins: [react(), mkcert()],
   base: "/web-application-development_frontend",
   server: {
-    host: 'localhost',
+    host: true,
     port: 3000,
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: false,
       }
     }
   },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets'
-  }
 })
