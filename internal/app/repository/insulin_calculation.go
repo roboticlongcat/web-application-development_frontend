@@ -33,7 +33,7 @@ func (r *Repository) GetInsulinCalculationInfo() (uint, int64, error) {
 }
 
 // GET список (кроме удаленных и черновика, поля модератора и создателя через логины)
-func (r *Repository) GetInsulinCalculations(filters map[string]interface{}) ([]ds.InsulinCalculation, error) {
+func (r *Repository) GetInsulinCalculations(filters map[string]interface{}) ([]ds.InsulinCalculation, []int64, error) {
 	var insulinCalculations []ds.InsulinCalculation
 
 	query := r.db.Preload("Creator", func(db *gorm.DB) *gorm.DB {
@@ -55,10 +55,30 @@ func (r *Repository) GetInsulinCalculations(filters map[string]interface{}) ([]d
 
 	err := query.Find(&insulinCalculations).Error
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return insulinCalculations, nil
+	// Получаем количество заполненных расчетов для каждого
+	calculatedCounts := make([]int64, len(insulinCalculations))
+	for i, calc := range insulinCalculations {
+		count, err := r.GetCalculatedCountForInsulinCalculation(calc.Insulin_Calculation_ID)
+		if err != nil {
+			count = 0
+		}
+		calculatedCounts[i] = count
+	}
+
+	return insulinCalculations, calculatedCounts, nil
+}
+
+func (r *Repository) GetCalculatedCountForInsulinCalculation(insulinCalculationID uint) (int64, error) {
+	var count int64
+
+	err := r.db.Model(&ds.InsulinCalculationPatients{}).
+		Where("insulin_calculation_id = ? AND calculated_insulin IS NOT NULL AND calculated_insulin > 0", insulinCalculationID).
+		Count(&count).Error
+
+	return count, err
 }
 
 // GET одна запись (поля расчета + его пациенты с данными из м-м связи)
@@ -199,9 +219,22 @@ func (r *Repository) CompleteInsulinCalculation(id uint, status string) error {
 // Установка времени расчета после получения результатов
 func (r *Repository) SetCalculationTime(calculationID uint) error {
 	now := time.Now()
-	return r.db.Model(&ds.InsulinCalculation{}).
-		Where("insulin_calculation_id = ?", calculationID).
-		Update("calculated_at", &now).Error
+
+	// Проверяем, что расчет существует и в статусе "завершён"
+	var calculation ds.InsulinCalculation
+	err := r.db.First(&calculation, calculationID).Error
+	if err != nil {
+		return fmt.Errorf("calculation %d not found: %w", calculationID, err)
+	}
+
+	// Обновляем только если еще не установлено
+	if calculation.CalculatedAt == nil {
+		return r.db.Model(&ds.InsulinCalculation{}).
+			Where("insulin_calculation_id = ?", calculationID).
+			Update("calculated_at", &now).Error
+	}
+
+	return nil
 }
 
 // DELETE удаление (дата формирования)

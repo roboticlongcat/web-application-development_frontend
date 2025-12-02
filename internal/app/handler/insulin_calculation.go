@@ -50,7 +50,7 @@ func (h *Handler) GetInsulinCalculations(ctx *gin.Context) {
 		filters["end_date"] = endDate
 	}
 
-	insulinCalculations, err := h.Repository.GetInsulinCalculations(filters)
+	insulinCalculations, calculatedCounts, err := h.Repository.GetInsulinCalculations(filters)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -60,7 +60,7 @@ func (h *Handler) GetInsulinCalculations(ctx *gin.Context) {
 	}
 
 	var response []gin.H
-	for _, calc := range insulinCalculations {
+	for i, calc := range insulinCalculations {
 		moderatorUsername := ""
 		if calc.Moderator.User_ID != 0 {
 			moderatorUsername = calc.Moderator.Username
@@ -74,6 +74,7 @@ func (h *Handler) GetInsulinCalculations(ctx *gin.Context) {
 			"completed_at":           calc.CompletedAt,
 			"creator_username":       calc.Creator.Username,
 			"moderator_username":     moderatorUsername,
+			"calculated_count":       calculatedCounts[i], // НОВОЕ ПОЛЕ!
 		})
 	}
 
@@ -246,43 +247,72 @@ func (h *Handler) DeleteInsulinCalculation(ctx *gin.Context) {
 
 // POST /api/insulin-calculations/dosage-results - прием результатов от асинхронного сервиса
 func (h *Handler) ReceiveCalculationResults(ctx *gin.Context) {
+	// Псевдо-авторизация
+	authToken := ctx.GetHeader("Authorization")
+	if authToken != "Bearer insulin123" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorized",
+		})
+		logrus.Warn("Unauthorized attempt to send results")
+		return
+	}
 
 	var request struct {
 		InsulinCalculationID uint `json:"insulin_calculation_id" binding:"required"`
 		Results              []struct {
-			InsulinCalculationPatientID uint    `json:"insulin_calculation_patient_id" binding:"required"`
-			PatientID                   uint    `json:"patient_id" binding:"required"`
-			CalculatedInsulin           float32 `json:"calculated_insulin" binding:"required"`
-			Status                      string  `json:"status" binding:"required"`
+			PatientID         uint    `json:"patient_id" binding:"required"`
+			CalculatedInsulin float32 `json:"calculated_insulin" binding:"required"`
+			Status            string  `json:"status" binding:"required"`
+			CalculationTime   string  `json:"calculation_time"`
 		} `json:"results" binding:"required"`
 	}
 
 	if err := ctx.BindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request format",
+			"error": "Invalid request format: " + err.Error(),
 		})
+		logrus.Errorf("Invalid request format: %v", err)
 		return
 	}
 
-	// Обновляем calculated_insulin для каждой записи м-м
+	logrus.Infof("Received calculation results for calculation %d, %d results",
+		request.InsulinCalculationID, len(request.Results))
+
+	// Обновляем calculated_insulin для каждого пациента
+	successCount := 0
 	for _, result := range request.Results {
-		err := h.Repository.UpdateCalculatedInsulin(
-			result.InsulinCalculationPatientID,
+		err := h.Repository.UpdateCalculatedInsulinByPatientID(
+			request.InsulinCalculationID,
 			result.PatientID,
 			result.CalculatedInsulin,
 		)
 		if err != nil {
-			logrus.Errorf("Error updating insulin for patient %d: %v", result.PatientID, err)
+			logrus.Errorf("Error updating insulin for patient %d in calculation %d: %v",
+				result.PatientID, request.InsulinCalculationID, err)
+		} else {
+			logrus.Infof("Updated insulin for calculation %d, patient %d: %.2f",
+				request.InsulinCalculationID, result.PatientID, result.CalculatedInsulin)
+			successCount++
 		}
 	}
 
-	// СТАВИМ calculated_at после получения всех результатов
-	err := h.Repository.SetCalculationTime(request.InsulinCalculationID)
-	if err != nil {
-		logrus.Errorf("Error setting calculation time: %v", err)
+	// Если хотя бы один результат обновился - ставим calculated_at
+	if successCount > 0 {
+		err := h.Repository.SetCalculationTime(request.InsulinCalculationID)
+		if err != nil {
+			logrus.Errorf("Error setting calculation time: %v", err)
+		} else {
+			logrus.Infof("Set calculated_at for calculation %d", request.InsulinCalculationID)
+		}
 	}
 
+	logrus.Infof("Successfully processed %d/%d results for calculation %d",
+		successCount, len(request.Results), request.InsulinCalculationID)
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Results updated successfully",
+		"message":        "Results updated successfully",
+		"calculation_id": request.InsulinCalculationID,
+		"total_results":  len(request.Results),
+		"updated":        successCount,
 	})
 }

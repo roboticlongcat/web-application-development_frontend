@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"sample/internal/app/auth"
 	"sample/internal/app/ds"
 )
@@ -23,7 +24,6 @@ func (r *Repository) RemovePatientFromInsulinCalculation(insulinCalculationID ui
 		Delete(&ds.InsulinCalculationPatients{}).Error
 }
 
-// PUT изменение количества/порядка/значения в м-м (без PK м-м)
 // PUT изменение количества/порядка/значения в м-м (без PK м-м)
 func (r *Repository) UpdatePatientInInsulinCalculation(insulinCalculationID uint, patientID uint, updates map[string]interface{}) error {
 	// Запрещаем изменение PK м-м
@@ -122,4 +122,26 @@ func (r *Repository) UpdateCurrentGlucose(insulinCalculationID uint, patientID u
 	return r.UpdatePatientInInsulinCalculation(insulinCalculationID, patientID, map[string]interface{}{
 		"current_glucose": glucose,
 	})
+}
+
+// Обновление рассчитанного инсулина по calculation_id и patient_id
+func (r *Repository) UpdateCalculatedInsulinByPatientID(calculationID, patientID uint, calculatedInsulin float32) error {
+	// Проверяем существует ли такая запись
+	var count int64
+	err := r.db.Model(&ds.InsulinCalculationPatients{}).
+		Where("insulin_calculation_id = ? AND patient_id = ?", calculationID, patientID).
+		Count(&count).Error
+
+	if err != nil {
+		return fmt.Errorf("error checking record: %w", err)
+	}
+
+	if count == 0 {
+		return fmt.Errorf("no record found for calculation_id=%d and patient_id=%d", calculationID, patientID)
+	}
+
+	// Обновляем запись
+	return r.db.Model(&ds.InsulinCalculationPatients{}).
+		Where("insulin_calculation_id = ? AND patient_id = ?", calculationID, patientID).
+		Update("calculated_insulin", calculatedInsulin).Error
 }
